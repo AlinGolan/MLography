@@ -6,6 +6,7 @@ import cv_algorithms
 
 from model import *
 from data import *
+from tensorflow.keras.callbacks import EarlyStopping   # <-- שורה חדשה
 import os
 from absl import flags, app
 import time
@@ -43,12 +44,16 @@ num_threads = 40
 
 FLAGS = flags.FLAGS
 
-# flags.DEFINE_string('model_name', 'mlography_segment.hdf5', 'Model name')
+flags.DEFINE_string('model_name', 'mlography_segment.hdf5', 'Model name')
 flags.DEFINE_string('imp_model_name', 'preprocessed_imgs.hdf5', 'impurities model name')
 flags.DEFINE_string('gb_model_name', 'grains_128.hdf5', 'grains boundary name')
 flags.DEFINE_string('state', 'use', 'use if model should be used. train if the model should be trained, test if it should be tested')
 flags.DEFINE_boolean('keep_training', True, 'True if model should be trained')
 flags.DEFINE_boolean('prepare_data', False, 'True if lables should be merged and contours should be generated')
+
+flags.DEFINE_boolean('early_stopping', False, 'True to use early stopping instead of fixed epochs')  #alin
+flags.DEFINE_integer('epochs', 150, 'Number of epochs (used as max epochs if early_stopping)')       #alin
+
 flags.DEFINE_string('base_dir', '/dev/shm', 'Base directory for the process of segmentation')
 flags.DEFINE_string('base_dir_final', "/home/matanr/MLography/Segmentation/unet/data", 'Base directory for the segmentation and the binarization after it')
 flags.DEFINE_string('in_dir', "/home/matanr/MLography/Segmentation/unet/data/metallography/train/image",
@@ -1051,11 +1056,17 @@ def main(_):
             # model = load_model(FLAGS.model_name)
             model = load_model(FLAGS.model_name, custom_objects={'binary_focal_loss_fixed': loss_func})
     
+        # if FLAGS.keep_training:
+        #     model_checkpoint = ModelCheckpoint(FLAGS.model_name, monitor='loss', verbose=1, save_best_only=True)
+        #     # model.fit_generator(myGene, steps_per_epoch=300, epochs=100, callbacks=[model_checkpoint])
+        #     # model.fit_generator(myGene, steps_per_epoch=300, epochs=300, callbacks=[model_checkpoint])
+        #     model.fit_generator(myGene, steps_per_epoch=300, epochs=150, callbacks=[model_checkpoint])
+
         if FLAGS.keep_training:
-            model_checkpoint = ModelCheckpoint(FLAGS.model_name, monitor='loss', verbose=1, save_best_only=True)
-            # model.fit_generator(myGene, steps_per_epoch=300, epochs=100, callbacks=[model_checkpoint])
-            model.fit_generator(myGene, steps_per_epoch=300, epochs=300, callbacks=[model_checkpoint])
-            # model.fit_generator(myGene, steps_per_epoch=300, epochs=150, callbacks=[model_checkpoint])
+            callbacks = [ModelCheckpoint(FLAGS.model_name, monitor='loss', verbose=1, save_best_only=True)]
+            if FLAGS.early_stopping:
+                callbacks.append(EarlyStopping(monitor='loss', patience=15, restore_best_weights=True))
+            model.fit_generator(myGene, steps_per_epoch=300, epochs=FLAGS.epochs, callbacks=callbacks)
     
         print("Finished training")
         # # testGene = testGenerator("data/membrane/test", num_image=30)

@@ -1,6 +1,7 @@
 ./ae_data/all_regularized_impurities_normal
 .idea/workspace.xml
 __pycache__/
+*.pyc
 model.h5
 model_ae.h5
 model_ae_extended.h5
