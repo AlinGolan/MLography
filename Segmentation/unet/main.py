@@ -6,7 +6,7 @@ import cv_algorithms
 
 from model import *
 from data import *
-from tensorflow.keras.callbacks import EarlyStopping   # <-- שורה חדשה
+from tensorflow.keras.callbacks import EarlyStopping  
 import os
 from absl import flags, app
 import time
@@ -53,6 +53,11 @@ flags.DEFINE_boolean('prepare_data', False, 'True if lables should be merged and
 
 flags.DEFINE_boolean('early_stopping', False, 'True to use early stopping instead of fixed epochs')  #alin
 flags.DEFINE_integer('epochs', 150, 'Number of epochs (used as max epochs if early_stopping)')       #alin
+
+flags.DEFINE_boolean('use_boundary_loss', False,
+                     'True to train with focal loss + distanceTransform-based boundary loss')  #alin
+flags.DEFINE_float('boundary_weight', 1.0,
+                   'Weight of the boundary loss term relative to the focal loss term')          #alin
 
 flags.DEFINE_string('base_dir', '/dev/shm', 'Base directory for the process of segmentation')
 flags.DEFINE_string('base_dir_final', "/home/matanr/MLography/Segmentation/unet/data", 'Base directory for the segmentation and the binarization after it')
@@ -1045,6 +1050,10 @@ def main(_):
         loss_func = binary_focal_loss(alpha=0.2)
         # loss_func = binary_focal_loss(alpha=0.99)
         # loss_func = 'binary_crossentropy'
+        custom_objects = {'binary_focal_loss_fixed': loss_func}
+        if FLAGS.use_boundary_loss:
+            loss_func = binary_focal_boundary_loss(alpha=0.2, boundary_weight=FLAGS.boundary_weight)
+            custom_objects = {'binary_focal_boundary_loss_fixed': loss_func}
         if not os.path.exists(FLAGS.model_name):
             # model = unet(loss_func=focal_crossentropy_loss(focus_param=focus_param, class_weights=class_weights))
             # impurities
@@ -1054,7 +1063,7 @@ def main(_):
             # model = unet16(input_size=(256,256,3), loss_func=loss_func)
         else:
             # model = load_model(FLAGS.model_name)
-            model = load_model(FLAGS.model_name, custom_objects={'binary_focal_loss_fixed': loss_func})
+            model = load_model(FLAGS.model_name, custom_objects=custom_objects)
     
         # if FLAGS.keep_training:
         #     model_checkpoint = ModelCheckpoint(FLAGS.model_name, monitor='loss', verbose=1, save_best_only=True)

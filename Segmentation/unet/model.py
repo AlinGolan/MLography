@@ -1,8 +1,9 @@
-import numpy as np 
+import numpy as np
 import os
 import skimage.io as io
 import skimage.transform as trans
 import numpy as np
+import cv2 as cv
 from keras.utils import multi_gpu_model
 from keras.models import *
 from keras.layers import *
@@ -59,6 +60,91 @@ def binary_focal_loss(gamma=2, alpha=0.99):
         return K.mean(focal_loss)
 
     return binary_focal_loss_fixed
+
+
+def _signed_boundary_distance_batch(masks, normalize=True):
+    """
+    numpy helper (wrapped by tf.py_func).
+
+    For every mask in the batch build a signed distance map ``phi`` w.r.t. the
+    foreground boundary, using ``cv2.distanceTransform``:
+        phi(x) < 0  inside  the foreground object
+        phi(x) > 0  outside the foreground object
+        phi(x) = 0  on the object boundary
+    Tiles that contain a single class (no boundary) contribute nothing.
+
+    masks: float array, shape (N, H, W, 1), values in [0, 1].
+    returns: float32 array, same shape.
+    """
+    masks = (np.asarray(masks) > 0.5).astype(np.uint8)
+    phi = np.zeros(masks.shape, dtype=np.float32)
+    for i in range(masks.shape[0]):
+        m = masks[i, :, :, 0]
+        has_fg = m.any()
+        has_bg = (m == 0).any()
+        if not has_fg or not has_bg:
+            continue
+        dist_in = cv.distanceTransform(m, cv.DIST_L2, 3)
+        dist_out = cv.distanceTransform(1 - m, cv.DIST_L2, 3)
+        d = dist_out - dist_in
+        if normalize:
+            max_abs = np.max(np.abs(d))
+            if max_abs > 0:
+                d = d / max_abs
+        phi[i, :, :, 0] = d
+    return phi
+
+
+def binary_focal_boundary_loss(gamma=2, alpha=0.99, boundary_weight=1.0,
+                               normalize_distance=True):
+    """
+    Combined loss = binary focal loss + ``boundary_weight`` * boundary loss.
+
+    The focal term is identical to :func:`binary_focal_loss`.
+
+    The boundary term follows Kervadec et al., "Boundary loss for highly
+    unbalanced segmentation" (https://arxiv.org/abs/1812.07032):
+        L_boundary = mean( y_pred * phi(y_true) )
+    where ``phi`` is the signed distance transform of the ground-truth
+    boundary (negative inside the object, positive outside), computed with
+    ``cv2.distanceTransform`` via ``tf.py_func``. Minimising it pushes the
+    prediction to 1 inside the object and to 0 outside, with the pressure
+    growing with the distance from the true contour.
+
+    Set ``boundary_weight=0`` to recover the plain focal loss.
+
+    Usage:
+        loss = binary_focal_boundary_loss(alpha=0.2, boundary_weight=1.0)
+        model.compile(loss=loss, optimizer=adam)
+        # loading later:
+        load_model(path, custom_objects={
+            'binary_focal_boundary_loss_fixed': loss})
+    """
+    alpha_c = tf.constant(alpha, dtype=tf.float32)
+    gamma_c = tf.constant(gamma, dtype=tf.float32)
+    boundary_weight_c = tf.constant(boundary_weight, dtype=tf.float32)
+
+    def binary_focal_boundary_loss_fixed(y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+
+        # ----- focal term (same as binary_focal_loss_fixed) -----------------
+        alpha_t = y_true * alpha_c + (K.ones_like(y_true) - y_true) * (1 - alpha_c)
+        p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * \
+            (K.ones_like(y_true) - y_pred) + K.epsilon()
+        focal = - alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma_c) * K.log(p_t)
+        focal_loss = K.mean(focal)
+
+        # ----- boundary term ----------------------------------------------------
+        phi = tf.py_func(
+            lambda m: _signed_boundary_distance_batch(m, normalize_distance),
+            [y_true], tf.float32, stateful=False)
+        phi.set_shape(y_pred.get_shape())
+        phi = tf.stop_gradient(phi)
+        boundary_loss = K.mean(y_pred * phi)
+
+        return focal_loss + boundary_weight_c * boundary_loss
+
+    return binary_focal_boundary_loss_fixed
 
 
 def unet(pretrained_weights=None, input_size=(512, 512, 1), loss_func='binary_crossentropy'):

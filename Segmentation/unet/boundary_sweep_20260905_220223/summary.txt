@@ -1,0 +1,8 @@
+host        : gpu002
+python      : /home/alingo/.conda/envs/mlography/bin/python
+epochs/run  : 50
+run root    : /home/alingo/MLography/Segmentation/unet/boundary_sweep_20260905_220223
+started     : Sat Sep  5 22:02:23 IDT 2026
+GPU visible : False
+
+=== [1/10] boundary_weight=0.0 -> boundary_sweep_20260905_220223/models/model_01_bw0.0.hdf5 ===
