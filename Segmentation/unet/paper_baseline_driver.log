@@ -1,0 +1,22 @@
+host        : gpu002
+epochs (max): 150
+threads/run : 15
+loss        : binary_focal_loss(alpha=0.2)  [code default]
+run root    : /home/alingo/MLography/Segmentation/unet/paper_baseline_20260908_034928
+started     : Tue Sep  8 03:49:28 IDT 2026
+
+launched  impurities_150  (task=impurities, data/small_split/train, extra='none')  pid=806670 -> paper_baseline_20260908_034928/logs/impurities_150.log
+launched  impurities_early  (task=impurities, data/small_split/train, extra='--early_stopping')  pid=806714 -> paper_baseline_20260908_034928/logs/impurities_early.log
+launched  gb_150  (task=gb, data/squares_128_split/train, extra='none')  pid=806874 -> paper_baseline_20260908_034928/logs/gb_150.log
+launched  gb_early  (task=gb, data/squares_128_split/train, extra='--early_stopping')  pid=807291 -> paper_baseline_20260908_034928/logs/gb_early.log
+
+all 4 launched, waiting... Tue Sep  8 03:49:49 IDT 2026
+/home/alingo/MLography/Segmentation/unet/run_paper_baseline.sh: line 69: 806670 Segmentation fault      (core dumped) stdbuf -oL -eL "$PY" main.py --state=train --task="$task" --train_dir="$tdir" --epochs="$EPOCHS" --keep_training=True $extra --model_name="$model" > "$log" 2>&1
+/home/alingo/MLography/Segmentation/unet/run_paper_baseline.sh: line 69: 806874 Segmentation fault      (core dumped) stdbuf -oL -eL "$PY" main.py --state=train --task="$task" --train_dir="$tdir" --epochs="$EPOCHS" --keep_training=True $extra --model_name="$model" > "$log" 2>&1
+impurities_150 exit=139  Tue Sep  8 03:56:16 IDT 2026
+/home/alingo/MLography/Segmentation/unet/run_paper_baseline.sh: line 69: 806714 Segmentation fault      (core dumped) stdbuf -oL -eL "$PY" main.py --state=train --task="$task" --train_dir="$tdir" --epochs="$EPOCHS" --keep_training=True $extra --model_name="$model" > "$log" 2>&1
+impurities_early exit=139  Tue Sep  8 03:56:17 IDT 2026
+gb_150 exit=139  Tue Sep  8 03:56:17 IDT 2026
+gb_early exit=1  Tue Sep  8 03:56:17 IDT 2026
+
+ALL DONE Tue Sep  8 03:56:17 IDT 2026

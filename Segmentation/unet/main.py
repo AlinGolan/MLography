@@ -59,6 +59,10 @@ flags.DEFINE_boolean('use_boundary_loss', False,
 flags.DEFINE_float('boundary_weight', 1.0,
                    'Weight of the boundary loss term relative to the focal loss term')          #alin
 
+flags.DEFINE_string('task', 'gb', "Training task: 'gb' or 'impurities'")                        #alin
+flags.DEFINE_string('train_dir', None,
+                    'Override the training data root (the dir holding the image/label subdirs)')  #alin
+
 flags.DEFINE_string('base_dir', '/dev/shm', 'Base directory for the process of segmentation')
 flags.DEFINE_string('base_dir_final', "/home/matanr/MLography/Segmentation/unet/data", 'Base directory for the segmentation and the binarization after it')
 flags.DEFINE_string('in_dir', "/home/matanr/MLography/Segmentation/unet/data/metallography/train/image",
@@ -1030,15 +1034,19 @@ def main(_):
                              zca_whitening=True,
                              rescale=1. / 255)
     
-        # impurities
-        # myGene = trainGenerator(2, 'data/small/train', 'image_preprocess_cons', 'label_fixed_cons', data_gen_args,
-        #                         save_to_dir=None, target_size=(128, 128))
-        
-    
         # grains
         # myGene = trainGenerator(2, 'data/65_squares/train', 'image', 'inv_label', data_gen_args,
         #                         save_to_dir=None, target_size=(256, 256), image_color_mode='grayscale')
-        myGene = trainGenerator(2, 'data/squares_128/train', 'image', 'inv_label', data_gen_args,
+        if FLAGS.task == 'impurities':
+            train_dir = FLAGS.train_dir or 'data/small/train'
+            image_subdir, label_subdir = 'image_preprocess_cons', 'label_fixed_cons'
+        elif FLAGS.task == 'gb':
+            train_dir = FLAGS.train_dir or 'data/squares_128/train'
+            image_subdir, label_subdir = 'image', 'inv_label'
+        else:
+            raise ValueError("unknown --task %r (expected 'gb' or 'impurities')" % FLAGS.task)
+        print("Training task={} dir={} ({} / {})".format(FLAGS.task, train_dir, image_subdir, label_subdir))
+        myGene = trainGenerator(2, train_dir, image_subdir, label_subdir, data_gen_args,
                                 # image_color_mode='grayscale',
                                 save_to_dir=None, target_size=(128, 128))
     

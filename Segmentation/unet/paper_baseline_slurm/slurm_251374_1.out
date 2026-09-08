@@ -1,0 +1,2 @@
+[Tue Sep  8 12:16:08 IDT 2026] START impurities_early  host=node019  cpus=16  -> paper_baseline_slurm/models/impurities_early.hdf5
+[Tue Sep  8 17:26:10 IDT 2026] END impurities_early  rc=1  elapsed=18602s

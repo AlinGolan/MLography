@@ -1,0 +1,3 @@
+launched gb_150 pid=863333 (host gpu001, 15 threads) -> paper_baseline_slurm/logs/gb_150.log
+launched gb_early pid=863381 (host gpu001, 15 threads) -> paper_baseline_slurm/logs/gb_early.log
+both gb baselines exited Tue Sep  8 17:26:33 IDT 2026

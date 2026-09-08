@@ -1,0 +1,32 @@
+host        : gpu002
+task        : gb
+train_dir   : data/squares_128_split/train
+epochs (max): 150   (EarlyStopping monitor=loss patience=15)
+threads/run : 6
+run root    : /home/alingo/MLography/Segmentation/unet/boundary_sweep_split_20260908_042110
+started     : Tue Sep  8 04:21:10 IDT 2026
+
+launched [1/10] boundary_weight=0.0  pid=812183  -> boundary_sweep_split_20260908_042110/logs/run_01_bw0.0.log
+launched [2/10] boundary_weight=0.1  pid=812212  -> boundary_sweep_split_20260908_042110/logs/run_02_bw0.1.log
+launched [3/10] boundary_weight=0.25  pid=812376  -> boundary_sweep_split_20260908_042110/logs/run_03_bw0.25.log
+launched [4/10] boundary_weight=0.5  pid=812768  -> boundary_sweep_split_20260908_042110/logs/run_04_bw0.5.log
+launched [5/10] boundary_weight=0.75  pid=813073  -> boundary_sweep_split_20260908_042110/logs/run_05_bw0.75.log
+launched [6/10] boundary_weight=1.0  pid=813361  -> boundary_sweep_split_20260908_042110/logs/run_06_bw1.0.log
+launched [7/10] boundary_weight=1.5  pid=813609  -> boundary_sweep_split_20260908_042110/logs/run_07_bw1.5.log
+launched [8/10] boundary_weight=2.0  pid=813775  -> boundary_sweep_split_20260908_042110/logs/run_08_bw2.0.log
+launched [9/10] boundary_weight=3.0  pid=814022  -> boundary_sweep_split_20260908_042110/logs/run_09_bw3.0.log
+launched [10/10] boundary_weight=5.0  pid=814268  -> boundary_sweep_split_20260908_042110/logs/run_10_bw5.0.log
+
+all 10 launched, waiting... Tue Sep  8 04:22:00 IDT 2026
+run 01 bw=0.0 exit=0  Tue Sep  8 13:16:20 IDT 2026
+run 02 bw=0.1 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 03 bw=0.25 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 04 bw=0.5 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 05 bw=0.75 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 06 bw=1.0 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 07 bw=1.5 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 08 bw=2.0 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 09 bw=3.0 exit=0  Tue Sep  8 16:32:30 IDT 2026
+run 10 bw=5.0 exit=0  Tue Sep  8 16:32:30 IDT 2026
+
+ALL DONE Tue Sep  8 16:32:30 IDT 2026
