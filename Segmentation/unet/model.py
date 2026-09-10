@@ -4,7 +4,13 @@ import skimage.io as io
 import skimage.transform as trans
 import numpy as np
 import cv2 as cv
-from keras.utils import multi_gpu_model
+try:
+    from keras.utils import multi_gpu_model
+except ImportError:
+    try:
+        from tensorflow.keras.utils import multi_gpu_model
+    except ImportError:
+        multi_gpu_model = None
 from keras.models import *
 from keras.layers import *
 from keras.optimizers import *
@@ -12,7 +18,7 @@ from keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from keras import backend as keras
 import tensorflow as tf
 from keras.applications.vgg16 import VGG16
-import keras.backend.tensorflow_backend as tfback
+import tensorflow.keras.backend as tfback
 
 # print("tf.__version__ is", tf.__version__)
 # print("tf.keras.__version__ is:", tf.keras.__version__)
@@ -193,7 +199,7 @@ def unet(pretrained_weights=None, input_size=(512, 512, 1), loss_func='binary_cr
     conv9 = Conv2D(2, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv9)
     conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
 
-    model = Model(input=inputs, output=conv10)
+    model = Model(inputs=inputs, outputs=conv10)
 
     model.compile(optimizer=Adam(lr=1e-6), loss=loss_func, metrics=['accuracy'])
     

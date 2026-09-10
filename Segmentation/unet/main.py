@@ -23,10 +23,15 @@ import skimage, skimage.morphology
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from skimage.feature import peak_local_max
-from skimage.morphology import watershed
+try:
+    from skimage.segmentation import watershed
+except ImportError:
+    from skimage.morphology import watershed
 
 import subprocess
 import multiprocessing
+
+
 
 num_threads = 40
 
@@ -64,8 +69,8 @@ flags.DEFINE_string('train_dir', None,
                     'Override the training data root (the dir holding the image/label subdirs)')  #alin
 
 flags.DEFINE_string('base_dir', '/dev/shm', 'Base directory for the process of segmentation')
-flags.DEFINE_string('base_dir_final', "/home/matanr/MLography/Segmentation/unet/data", 'Base directory for the segmentation and the binarization after it')
-flags.DEFINE_string('in_dir', "/home/matanr/MLography/Segmentation/unet/data/metallography/train/image",
+flags.DEFINE_string('base_dir_final', "data", 'Base directory for the segmentation and the binarization after it')
+flags.DEFINE_string('in_dir', "data/metallography/train/image",
                     'directory that holds input image')
 flags.DEFINE_string('in_img', None, 'input image name')
 flags.DEFINE_integer('stride', 16, 'stride for segmentation windows')
@@ -803,9 +808,9 @@ def divide_and_conquer(in_dir, in_img, stride, base_dir, base_dir_final, scale_f
     print("Preprocessed squares in: " + prep_dir)
 
     # impurities segmentation
-    is_p = multiprocessing.Process(target=impurities_segmentation, args=(base_dir, prep_dir, in_img)) 
-    is_p.start() 
-    is_p.join()
+
+    impurities_segmentation(base_dir, prep_dir, in_img)
+
     segment_out_base_dir = os.path.join(base_dir, "segmented_squares")
     segment_out_dir = os.path.join(segment_out_base_dir, in_img)
     print("Impurities Segmented in: " + segment_out_dir)
@@ -833,9 +838,9 @@ def divide_and_conquer(in_dir, in_img, stride, base_dir, base_dir_final, scale_f
     print("Constructed mask in: " + imps_mask_dir)
     
     # impurities inpainting
-    ii_p = multiprocessing.Process(target=impurities_inpainting, args=(base_dir_final, in_dir, in_img, png_file)) 
-    ii_p.start() 
-    ii_p.join()
+
+    impurities_inpainting(base_dir_final, in_dir, in_img, png_file)
+
     without_impurities_dir = os.path.join(base_dir_final, "without_impurities")
     print("Inpainted impurities in: " + without_impurities_dir)
     
@@ -850,9 +855,9 @@ def divide_and_conquer(in_dir, in_img, stride, base_dir, base_dir_final, scale_f
     print("Divided to squares wihtout impurities in: " + squares_without_impurities_dir)
     
     # grains boundary segmentation
-    gbs_p = multiprocessing.Process(target=gb_segmentation, args=(base_dir, png_file, squares_without_impurities_dir)) 
-    gbs_p.start() 
-    gbs_p.join()
+    
+    gb_segmentation(base_dir, png_file, squares_without_impurities_dir)
+
     squares_without_impurities_edges_base = os.path.join(base_dir, "without_impurities_squares_edges")
     squares_without_impurities_edges = os.path.join(squares_without_impurities_edges_base, png_file)
     print("GB Segmented in: " + squares_without_impurities_edges)
@@ -1034,6 +1039,12 @@ def main(_):
                              zca_whitening=True,
                              rescale=1. / 255)
     
+        # impurities
+        # myGene = trainGenerator(2, 'data/small/train', 'image_preprocess_cons', 'label_fixed_cons', data_gen_args,
+        #                         save_to_dir=None, target_size=(128, 128))
+        
+
+
         # grains
         # myGene = trainGenerator(2, 'data/65_squares/train', 'image', 'inv_label', data_gen_args,
         #                         save_to_dir=None, target_size=(256, 256), image_color_mode='grayscale')
